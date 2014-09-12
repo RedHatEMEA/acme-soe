@@ -1,5 +1,5 @@
 Name:           aoetools
-Version:        36
+Version:        37
 Release:        9%{?dist}
 Summary:        ATA over Ethernet Tools
 Group:          System Environment/Base
