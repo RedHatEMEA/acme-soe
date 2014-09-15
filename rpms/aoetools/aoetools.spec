@@ -1,6 +1,6 @@
 Name:           aoetools
-Version:        37
-Release:        9%{?dist}
+Version:        36
+Release:        10%{?dist}
 Summary:        ATA over Ethernet Tools
 Group:          System Environment/Base
 License:        GPLv2
