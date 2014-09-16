@@ -1,0 +1,28 @@
+{
+  "name": "root-ssh",
+  "version": "0.0.1",
+  "source": "",
+  "author": "root",
+  "license": "",
+  "summary": "",
+  "description": "",
+  "project_page": "",
+  "dependencies": [
+
+  ],
+  "types": [
+
+  ],
+  "checksums": {
+    "Modulefile": "8ee28c18f8e3d4d3f923ae152af02bf3",
+    "README": "bb663cefd97798453b343f11aa3f467a",
+    "files/ssh-config-root": "c971b3fec6df81a303f91ad3d2598862",
+    "manifests/init.pp": "e9b43d6b682bed4fe8731ffef8456daa",
+    "spec/spec.opts": "a600ded995d948e393fbe2320ba8e51c",
+    "spec/spec_helper.rb": "ca19ec4f451ebc7fdb035b52eae6e909",
+    "templates/banner.erb": "f14f97193a95de49313cc90fa534b9de",
+    "templates/banner_sub.erb": "1fd013b87dd474bc0bf013868bae7d7f",
+    "templates/root.erb": "0a3f3527f3310685bb5dde46d4799c46",
+    "templates/sshd_config.erb": "5d520894baf33fdadabc070b410a69ce"
+  }
+}
