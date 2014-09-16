@@ -4,8 +4,8 @@ Release:        1%{?dist}
 Summary:        Bash Automated Testing System
 Group:          System Environment/Base
 License:        other
-URL:    	https://github.com/nstrug/bats/
-Source0:        https://github.com/sstephenson/bats/archive/master.zip
+URL:    	https://github.com/sstephenson/bats/
+Source0:        https://github.com/sstephenson/bats/archive/bats-master.zip
 
 
 %description
@@ -13,7 +13,7 @@ Bats is a TAP-compliant testing framework for Bash. It provides a simple way to 
 
 
 %prep
-%setup -n bats
+%setup -n bats-master
 
 %build
 
