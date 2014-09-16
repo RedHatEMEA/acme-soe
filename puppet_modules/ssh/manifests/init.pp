@@ -69,9 +69,9 @@ class ssh (
     content => template("ssh/banner.erb"),
   }
 
-  if ($domain == "xeop.de") or ($domain == "rdev.deutsche-boerse.de") {
+  if ($domain == "acme.com") or ($domain == "example.com") {
     class { ssh::admin_keys: }
-  } elsif ($domain == "dbag.prod") {
+  } elsif ($domain == "acme.prod") {
     class { ssh::admin_keys::prod: }
   }
 }
