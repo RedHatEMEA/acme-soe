@@ -1,6 +1,6 @@
 Name:           aopalliance
 Version:        1.1
-Release:        15%{?dist}
+Release:        16%{?dist}
 Epoch:          0
 Summary:        Java/J2EE AOP standards
 License:        Public Domain
