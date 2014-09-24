@@ -1,9 +1,0 @@
-###########################################
-## WARNING - THIS FILE IS MANAGED BY PUPPET
-## ANY LOCAL CHANGES WILL BE LOST
-############################################
-
-
-IdentityFile ~/.ssh/kdump_id_rsa
-IdentityFile ~/.ssh/id_rsa
-IdentityFile ~/.ssh/id_dsa
