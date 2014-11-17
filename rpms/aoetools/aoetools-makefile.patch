@@ -1,0 +1,14 @@
+diff -up aoetools-21/Makefile.orig aoetools-21/Makefile
+--- aoetools-21/Makefile.orig	2007-10-12 14:57:15.000000000 -0500
++++ aoetools-21/Makefile	2007-11-30 10:18:46.000000000 -0600
+@@ -58,8 +58,8 @@ install : all
+ 	mkdir -p ${DESTDIR}${SBINDIR}
+ 	mkdir -p ${DESTDIR}${MANDIR}/man8
+ 	@for f in ${COMMANDS}; do \
+-	  sh -xc "install -m 700 $$f ${DESTDIR}${SBINDIR}/$$f" || break; \
+-	  sh -xc "install -m 664 $$f.8 ${DESTDIR}${MANDIR}/man8/$$f.8" || break; \
++	  sh -xc "install -m 755 $$f ${DESTDIR}${SBINDIR}/$$f" || break; \
++	  sh -xc "install -m 644 $$f.8 ${DESTDIR}${MANDIR}/man8/$$f.8" || break; \
+ 	done
+ 
+ clean :
