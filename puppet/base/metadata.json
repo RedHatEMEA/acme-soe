@@ -1,0 +1,17 @@
+{
+  "name": "acme-base",
+  "version": "0.0.1",
+  "author": "Nick Strugnell <nstrug@redhat.com>",
+  "license": "Licensed under (GPL 3.0)",
+  "summary": "Module to load classes from hiera",
+  "source": "https://github.com/RedHatEMEA/acme-soe",
+  "tags": ["base"],
+  "operatingsystem_support": [
+    {
+    "operatingsystem":"RedHat",
+    "operatingsystemrelease":[ "7.0" ]
+    }
+   ],
+  "dependencies": [
+  ]
+}
