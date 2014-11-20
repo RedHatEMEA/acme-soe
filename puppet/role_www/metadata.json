@@ -1,11 +1,11 @@
 {
-  "name": "acme-resource_auto",
+  "name": "acme-role_www",
   "version": "0.0.1",
   "author": "Nick Strugnell <nstrug@redhat.com>",
   "license": "Licensed under (GPL 3.0)",
   "summary": "Module to load classes from hiera",
   "source": "https://github.com/RedHatEMEA/acme-soe",
-  "tags": ["resource", "resouce_auto"],
+  "tags": ["role","role::www"],
   "operatingsystem_support": [
     {
     "operatingsystem":"RedHat",

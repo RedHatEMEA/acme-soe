@@ -1,4 +1,4 @@
-# == Class: resource_auto ==
+# == Class: auto ==
 #
 # Auto include classes based on hiera
 #
@@ -14,9 +14,9 @@
 #
 # none
 #
-class resource_auto() {
-  tag 'resource'
-  tag 'resource_auto'
+class auto() {
+  tag 'auto'
 
   hiera_include('classes')
 }
+

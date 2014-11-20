@@ -1,4 +1,4 @@
-# == Class: base ==
+# == Class: profile::base ==
 #
 # Base dummy class
 #
@@ -14,8 +14,8 @@
 #
 # none
 #
-class base() {
-  tag 'base'
+class profile::base inherits profile {
+  tag 'profile::base'
 
   file { '/etc/issue':
     ensure  => present,

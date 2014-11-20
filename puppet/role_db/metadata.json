@@ -1,11 +1,11 @@
 {
-  "name": "acme-base",
-  "version": "0.0.2",
+  "name": "acme-role_db",
+  "version": "0.0.1",
   "author": "Nick Strugnell <nstrug@redhat.com>",
   "license": "Licensed under (GPL 3.0)",
-  "summary": "Module to load classes from hiera",
+  "summary": "Database Role",
   "source": "https://github.com/RedHatEMEA/acme-soe",
-  "tags": ["base"],
+  "tags": ["role","role::db"],
   "operatingsystem_support": [
     {
     "operatingsystem":"RedHat",
