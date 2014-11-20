@@ -1,6 +1,6 @@
 {
   "name": "acme-base",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Nick Strugnell <nstrug@redhat.com>",
   "license": "Licensed under (GPL 3.0)",
   "summary": "Module to load classes from hiera",
