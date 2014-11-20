@@ -17,12 +17,12 @@
 class base() {
   tag 'base'
 
-  file { '/etc/issue:
+  file { '/etc/issue':
     ensure  => present,
     content => template('base/issue.erb'),
   }
 
-  file { '/etc/issue.net:
+  file { '/etc/issue.net':
     ensure  => present,
     content => template('base/issue.net.erb'),
   }
