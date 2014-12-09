@@ -1,4 +1,4 @@
-# == Class: profile::postgres ==
+# == Class: profile_postgres ==
 #
 # Install postgres
 #
@@ -14,8 +14,10 @@
 #
 # none
 #
-class profile::postgres inherits from profile {
-  tag 'profile::postgres'
+class profile_postgres {
+  tag 'profile_postgres'
+  
+  include profile
 
   package {"postgresql-server":
 	ensure => installed,

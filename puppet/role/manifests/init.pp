@@ -17,6 +17,6 @@
 class role {
   tag 'role'
 
-  include profile::base
+  include profile_base
 }
 

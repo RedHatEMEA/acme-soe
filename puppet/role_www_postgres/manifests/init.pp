@@ -1,4 +1,4 @@
-# == Class: role::db::postgres ==
+# == Class: role_db_postgres ==
 #
 # Postgres Database Role
 #
@@ -14,10 +14,11 @@
 #
 # none
 #
-class role::db::postgres inherits role::db {
-  tag 'role::db::postgres'
+class role_db_postgres {
+  tag 'role_db_postgres'
  
-  include profile::postgres  
+  include role_db
+  include profile_postgres  
  
 }
 

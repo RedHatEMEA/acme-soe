@@ -1,4 +1,4 @@
-# == Class: role::www ==
+# == Class: role_www ==
 #
 # Webserver Role
 #
@@ -14,7 +14,9 @@
 #
 # none
 #
-class role::www inherits role {
-  tag 'role::www'
+class role_www  {
+  tag 'role_www'
+
+  include role
 }
 

@@ -1,4 +1,4 @@
-# == Class: profile::apache ==
+# == Class: profile_apache ==
 #
 # Install apache
 #
@@ -14,8 +14,10 @@
 #
 # none
 #
-class profile::apache inherits from profile {
-  tag 'profile::apache'
+class profile_apache {
+  tag 'profile_apache'
+
+  include profile
 
   package {"httpd":
 	ensure => installed,

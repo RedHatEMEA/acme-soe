@@ -1,4 +1,4 @@
-# == Class: role::www::apache ==
+# == Class: role_www_apache ==
 #
 # Apache Webserver Role
 #
@@ -14,10 +14,11 @@
 #
 # none
 #
-class role::www::apache inherits role::www {
-  tag 'role::www::apache'
+class role_www_apache {
+  tag 'role_www_apache'
  
-  include profile::apache  
+  include role
+  include profile_apache  
  
 }
 

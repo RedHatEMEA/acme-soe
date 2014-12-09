@@ -1,4 +1,4 @@
-# == Class: role::db ==
+# == Class: role_db ==
 #
 # Database Role
 #
@@ -14,7 +14,9 @@
 #
 # none
 #
-class role::db inherits role {
-  tag 'role::db'
+class role_db {
+  tag 'role_db'
+
+  include role
 }
 
