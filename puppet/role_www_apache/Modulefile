@@ -1,0 +1,9 @@
+name    'acme-role_www_apache'
+version '0.1.0'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'Nick Strugnell <nstrug@redhat.com>'
+license 'GPL v3'
+summary 'Apache WWW Role'
+description 'Apache WWW Role'
+project_page 'https://github.com/RedHatEMEA/acme-soe'
+
