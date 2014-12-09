@@ -1,0 +1,430 @@
+#!/bin/bash
+#
+# Local development puppet runs
+#
+
+if [[ -n $HOIDEBUG ]]; then PS4='+\t '; set -x -u; else set -u; fi
+echoerr() { echo "$@" 1>&2; }
+
+# Exit codes
+USERFAIL=11
+ARGFAIL=12
+CONFFAIL=13
+INPUTFAIL=14
+RUNFAIL=15
+
+# Guess default base dir for git/hoi and git/hoienv
+# Try to load from git toplevel, otherwise default is $HOME/git
+GITDIR=`readlink -m $(git rev-parse --show-toplevel 2> /dev/null || echo $HOME/git/hoi)/..`
+HOICIBASE=/opt/hoici
+HOIYAML=/opt/hoi/bin/hoi-yaml
+
+# Arguments
+ARG_FORCE=0
+ARG_DEBUG=0
+ARG_DO_NOOP=0
+ARG_DO_APPLY=0
+ARG_DO_HIERA=0
+ARG_DO_FACTER=0
+ARG_GITHOIDIR=$GITDIR/hoi
+ARG_GITHOIENVDIR=$GITDIR/hoienv
+ARG_LOCALHIERAFILE=""
+ARG_ITEMS=
+
+args_usage()
+{
+  cat << EOF
+Usage: $0 <--noop|--apply|--hiera|--facter> <items...>
+
+   --apply <modules>
+      Apply puppet modules <modules>
+   --noop <modules>
+      Dry run mode to see changes that will be applied by puppet modules <modules>
+   --hiera <parameters>
+      Verify lookup of hiera parameters
+   --facter [fact]
+      Run puppet facter, optionally filtering [fact]
+
+   --localhierafile=<file>
+      Hiera data file to insert as first entry in the hierarchy to load hiera
+      data from
+   --debug
+      Run puppet with verbosity debug
+   --hoici
+      Use data from $HOICIBASE/{puppet|hiera} instead of local git checkout.
+   --gitgithoidir=<dir>
+      Directory to find local git checkout of hoi repo.
+      This repo contains the puppet modules
+      Default is $ARG_GITHOIDIR
+   --gitgithoienvdir=<dir>
+      Directory to find local git checkout of hoienv repo.
+      This repo contains the hiera data
+      Default is $ARG_GITHOIENVDIR
+
+  Variables/Facts overrides
+
+  Support override variables/facts is provided using the --localhierafile option.
+  Define a 'variables' hash. Each key-value pair defines a variable.
+  Example:
+    variables:
+      hilti_hw_class: proliant
+      hilti_hw_id: Faked Test Proliant
+EOF
+}
+
+
+args_read()
+{
+  # read the options
+  OPTTEMP=`getopt -oh --long help,noop,apply,hiera,facter,debug,hoici,localhierafile:,githoidir:,githoienvdir:,force -n "$0" -- "$@"`
+  if [[ $? -ne 0 ]]; then
+    args_usage
+    exit $ARGFAIL
+  fi
+  eval set -- "$OPTTEMP"
+
+  # extract options and their arguments into variables.
+  while true ; do
+    case "$1" in
+      --noop)
+        ARG_DO_NOOP=1
+        shift 1 ;;
+      --apply)
+        ARG_DO_APPLY=1
+        shift 1 ;;
+      --hiera)
+        ARG_DO_HIERA=1
+        shift 1 ;;
+      --facter)
+        ARG_DO_FACTER=1
+        shift 1 ;;
+      --githoidir)
+        ARG_GITHOIDIR=$2
+        shift 2 ;;
+      --githoienvdir)
+        ARG_GITHOIENVDIR=$2
+        shift 2 ;;
+      --force)
+        ARG_FORCE=1
+        shift 1 ;;
+      --debug)
+        ARG_DEBUG=1
+        shift 1 ;;
+      --hoici)
+        ARG_HOICI=1
+        shift 1 ;;
+      --localhierafile)
+        ARG_LOCALHIERAFILE=$2
+        shift 2 ;;
+      -h|--help)
+        args_usage
+        exit 0 ;;
+      --)
+        shift
+        break ;;
+      *)
+        echo "Internal error!"
+        exit $ARGFAIL ;;
+    esac
+  done
+
+  ARG_ITEMS="$@"
+
+  # Options can be combined
+  if [[ $(( $ARG_DO_APPLY + $ARG_DO_NOOP + $ARG_DO_FACTER + $ARG_DO_HIERA )) -eq 0 ]]; then
+    echoerr "ERROR: Missing or conflicting actions found"
+    args_usage
+    exit $ARGFAIL
+  fi
+
+  if [[ $(( $ARG_DO_APPLY + $ARG_DO_NOOP )) -gt 0 ]]; then
+    if [[ -z $ARG_ITEMS ]]; then
+      echoerr "ERROR: Missing modules to apply"
+      args_usage
+      exit $ARGFAIL
+    fi
+  fi
+
+  if [[ $(( $ARG_DO_HIERA )) -gt 0 ]]; then
+    if [[ -z $ARG_ITEMS ]]; then
+      echoerr "ERROR: Missing parameters to lookup"
+      args_usage
+      exit $ARGFAIL
+    fi
+  fi
+
+  if [[ -n $ARG_LOCALHIERAFILE ]]; then
+    if [[ ! -f $ARG_LOCALHIERAFILE ]]; then
+      echoerr "ERROR: Missing local hiera file '$ARG_LOCALHIERAFILE'"
+      exit $ARGFAIL
+    fi
+  fi
+
+  return 0
+}
+
+
+create_hiera_environment()
+{
+  builddir=$1
+  hieradatadir=$2
+  hieraconffile=$hieradatadir/hiera.yaml
+
+  if [[ ! -f $hieraconffile ]]; then
+    echoerr "ERROR: Missing source hiera.yaml file '$hieraconffile'"
+    return $INPUTFAIL
+  fi
+
+  if [[ ! -d $hieradatadir ]]; then
+    echoerr "ERROR: Missing source hiera data directory '$hieradatadir'"
+    return $INPUTFAIL
+  fi
+
+  # Get full path of localhierafile, implicitly checks if the
+  # file exists
+  if [[ -n $ARG_LOCALHIERAFILE ]]; then
+    localhierafile=$(readlink -e $ARG_LOCALHIERAFILE 2> /dev/null)
+  else
+    localhierafile=
+  fi
+
+  # Create temporary hiera configuration based on the original hiera config:
+  # - set datadir to /
+  # - insert local hiera configuration file as first in hierarchy
+  # - replace hierarchy directories with absolute path
+  localhieraentry=${localhierafile/.yaml/}
+  localhieraentry=${localhieraentry/\//}
+  hieradirprefix=${hieradatadir/\//}
+  buildhieraconf=$builddir/hiera.yaml
+  awk "
+BEGIN { inhiera=0; inhierafirst=0 }
+/^ *:datadir/ { print gensub(/['\\/a-zA-Z0-9]*\$/,\"/\",\"\",\$0); next }
+/^:hierarchy/ { inhiera=1; inhierafirst=1; print \$0; next }
+/^ *-/ { if (inhiera==1) {
+            if ((inhierafirst==1) && (\"$localhieraentry\" != \"\")) {
+              print gensub(/( *- *).*/,\"\\\\1$localhieraentry\",\"\",\$0);
+            }
+            inhierafirst=0
+            print gensub(/( *- *)/,\"\\\\1$hieradirprefix/\",\"\",\$0);
+            next
+         }
+       }
+// { inhiera = 0; print }
+" $hieraconffile > $buildhieraconf
+
+  return 0
+}
+
+
+create_local_pp()
+{
+  builddir=$1
+  modules=$2
+
+  variables=""
+  if [[ -n $ARG_LOCALHIERAFILE ]]; then
+    variables=`$HOIYAML $ARG_LOCALHIERAFILE --get variables --default=''`
+  fi
+  if [[ -n "$variables" ]]; then
+    echoerr "INFO: Detected variables in '$ARG_LOCALHIERAFILE', adding to local.pp"
+    echoerr "$(echo "$variables" | sed 's+^+ - +')"
+  fi
+
+  (
+    echo "node default {"
+    echo "$variables" | sed 's+\([^=]*\)=\(.*\)+$\1="\2"+'
+    for module in $modules; do
+      echo "include $module"
+    done
+    echo "}"
+  ) > $builddir/local.pp
+
+  return 0
+}
+
+
+run_puppet()
+{
+  runmode=$1
+  hieradatadir=$2
+  modulepath=$3
+  modules=$4
+
+  builddir=`mktemp -d`
+
+  create_hiera_environment $builddir $hieradatadir
+  res=$?
+  if [[ $res -ne 0 ]]; then
+    rm -rf builddir
+    return $res
+  fi
+
+  create_local_pp $builddir "$modules"
+  res=$?
+  if [[ $res -ne 0 ]]; then
+    rm -rf builddir
+    return $res
+  fi
+
+  # Hiera path
+  puppetopt="--show_diff --hiera_config=$builddir/hiera.yaml --environment=local"
+
+  # Module paths
+  puppetopt="$puppetopt --modulepath=$modulepath"
+
+  # Debug, noop options
+  if [[ $ARG_DEBUG -eq 1 ]]; then
+    puppetopt="$puppetopt --debug"
+  fi
+  if [[ $runmode == "noop" ]]; then
+    puppetopt="$puppetopt --noop"
+  fi
+
+  # Local Manifest
+  puppetopt="$puppetopt $builddir/local.pp"
+
+  echoerr "INFO: Executing 'sudo puppet apply $puppetopt'"
+  sudo puppet apply $puppetopt
+  if [[ $? -ne 0 ]]; then
+    echoerr "ERROR: Puppet run failed"
+    rm -rf builddir
+    return $RUNFAIL
+  fi
+
+  rm -rf $builddir
+}
+
+
+run_hiera()
+{
+  hieradatadir=$1
+  parameters=$2
+
+  builddir=`mktemp -d`
+
+  create_hiera_environment $builddir $hieradatadir
+  res=$?
+  if [[ $res -ne 0 ]]; then
+    rm -rf builddir
+    return $res
+  fi
+
+  # Create data using facter
+  sudo facter --puppet --yaml > $builddir/facts.yaml
+  if [[ $? -ne 0 ]]; then
+    echoerr "ERROR: Generating facts using facter for hiera lookup failed"
+    rm -rf builddir
+    return $RUNFAIL
+  fi
+
+  # Hiera path
+  hieraopt="--config=$builddir/hiera.yaml --yaml=$builddir/facts.yaml"
+
+  # Debug, noop options
+  if [[ $ARG_DEBUG -eq 1 ]]; then
+    hieraopt="$hieraopt --debug"
+  fi
+
+  # Parameters
+  hieraopt="$hieraopt $parameters"
+
+  echoerr "INFO: Executing 'hiera $hieraopt'"
+  hiera $hieraopt
+  if [[ $? -ne 0 ]]; then
+    echoerr "ERROR: Hiera lookup failed"
+    rm -rf builddir
+    return $RUNFAIL
+  fi
+
+  rm -rf $builddir
+}
+
+
+run_facter()
+{
+  modulebasepath=$1
+  facts="$2"
+  [[ -z $facts ]] && facts='.*'
+
+  # Facter paths
+  facterpath=`find $modulebasepath -mindepth 3 -maxdepth 4 -type d -name 'facter' -printf "%p:" | sed 's+:$++'`
+  res=$?
+  if [[ $res -ne 0 ]]; then
+    echoerr "ERROR: Failed to find facter directories in '$modulebasepath'"
+    rm -rf builddir
+    return $res
+  fi
+
+  # Load puppet plugin to support /etc/facter/facts.d
+  facteropt="--puppet"
+
+  # Debug options
+  if [[ $ARG_DEBUG -eq 1 ]]; then
+    facteropt="$facteropt --debug --timing"
+  fi
+
+  echoerr "INFO: Executing 'FACTERLIB=$facterpath sudo facter $facteropt'"
+  export FACTERLIB=$facterpath
+  facterresult=`sudo facter $facteropt`
+  if [[ $? -ne 0 ]]; then
+    echoerr "ERROR: Facter run failed"
+    echo "$facterresult"
+    return $RUNFAIL
+  fi
+  echo "$facterresult" | egrep "$facts"
+  if [[ $? -ne 0 ]]; then
+    echoerr "ERROR: Fact '$facts' not found"
+    return $RUNFAIL
+  fi
+
+  return 0
+}
+
+
+#
+# MAIN
+#
+args_read $@
+
+
+if [[ $ARG_HOICI -eq 1 ]]; then
+  echoerr "INFO: Running in 'hoici' mode, using data from $HOICIBASE"
+  if [[ ! -d $HOICIBASE ]]; then
+    echoerr "ERROR: Missing hoici environment"
+    exit $CONFFAIL
+  fi
+  HIERADATADIR=$HOICIBASE/hiera
+  MODULEBASEPATH=$HOICIBASE/puppet
+else
+  echoerr "INFO: Using Git Hoi dir '$ARG_GITHOIDIR'"
+  echoerr "INFO: Using Git Hoienv dir '$ARG_GITHOIENVDIR'"
+  HIERADATADIR=$ARG_GITHOIENVDIR/hiera
+  MODULEBASEPATH=$ARG_GITHOIDIR/puppet
+fi
+echoerr "INFO: Using Puppet Modulebasepath dir '$MODULEBASEPATH'"
+echoerr "INFO: Using Hiera dir '$HIERADATADIR'"
+[[ -n $ARG_LOCALHIERAFILE ]] && echoerr "INFO: Using Local Hiera data file '$ARG_LOCALHIERAFILE'"
+
+if [[ $ARG_DO_APPLY -eq 1 ]]; then
+  echoerr "INFO: Applying modules '$ARG_ITEMS'"
+  run_puppet "apply" $HIERADATADIR "$MODULEBASEPATH" "$ARG_ITEMS"
+  res=$? && [[ $res -ne 0 ]] && exit $res
+fi
+
+if [[ $ARG_DO_NOOP -eq 1 ]]; then
+  echoerr "INFO: Testing modules '$ARG_ITEMS'"
+  run_puppet "noop" $HIERADATADIR "$MODULEBASEPATH" "$ARG_ITEMS"
+  res=$? && [[ $res -ne 0 ]] && exit $res
+fi
+
+if [[ $ARG_DO_FACTER -eq 1 ]]; then
+  run_facter $MODULEBASEPATH "$ARG_ITEMS"
+  res=$? && [[ $res -ne 0 ]] && exit $res
+fi
+
+if [[ $ARG_DO_HIERA -eq 1 ]]; then
+  run_hiera $HIERADATADIR "$ARG_ITEMS"
+  res=$? && [[ $res -ne 0 ]] && exit $res
+fi
+
+exit 0

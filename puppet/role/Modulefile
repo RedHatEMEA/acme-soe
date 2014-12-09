@@ -1,0 +1,9 @@
+name    'acme-role'
+version '0.1.0'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'Nick Strugnell <nstrug@redhat.com>'
+license 'GPL v3'
+summary 'Base Class for Role'
+description 'Role modules should inherit from this class'
+project_page 'https://github.com/RedHatEMEA/acme-soe'
+

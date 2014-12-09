@@ -1,0 +1,9 @@
+name    'acme-auto'
+version '0.1.0'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'Nick Strugnell <nstrug@redhat.com>'
+license 'GPL v3'
+summary 'Hiera Include'
+description 'Use this class to handover control of class loading to Hiera'
+project_page 'https://github.com/RedHatEMEA/acme-soe'
+

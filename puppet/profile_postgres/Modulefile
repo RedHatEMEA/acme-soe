@@ -1,0 +1,9 @@
+name    'acme-profile_postgres'
+version '0.1.0'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'Nick Strugnell <nstrug@redhat.com>'
+license 'GPL v3'
+summary 'Profile class for a PostgreSQL server'
+description 'Include this class to configure a server in the PostgreSQL role'
+project_page 'https://github.com/RedHatEMEA/acme-soe'
+

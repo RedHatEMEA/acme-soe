@@ -1,0 +1,74 @@
+#!/bin/bash -x
+#
+# Local development puppet runs
+#
+
+usage()
+{
+    cat <<EOF
+Usage: $0 --m|--modulepath MODULEPATH -c|--class CLASS -p|--params YAMLPARAMS -h|--help
+
+MODULEPATH  = Path to Puppet modules
+CLASS       = The Puppet class to apply
+YAMLPARAMS = A YAML Hiera file containing class parameters
+EOF
+}
+
+get_args()
+{
+    ARGS=$(getopt -o m:c:p:h -l "modulepath:class:params:help" -n "$0" -- "$@")
+
+    #Bad arguments
+    if [ $? -ne 0 ]
+    then
+        usage
+    exit 1
+    fi
+
+    eval set -- "$ARGS";
+
+    while true; do
+        case "$1" in
+        -m|--modulepath)
+            MODULEPATH="$2"
+            shift 2 ;;
+        -c|--class)
+            CLASS="$2";
+            shift 2 ;;
+        -p|--params)
+            YAMLPARAMS="$2";
+            shift 2 ;;
+        -h|--help)
+            usage
+            exit 0 ;;
+        --)
+            shift
+            break ;;
+        esac
+    done
+}
+
+puppet_apply()
+{
+    puppet apply -v --hiera_config $HIERADIR/hiera.yaml --modulepath=$MODULEPATH -e "include $CLASS" 
+}
+
+create_hiera()
+{
+    export HIERADIR=$(mktemp -d)
+    cp $YAMLPARAMS $HIERADIR/test.yaml
+    cat > $HIERADIR/hiera.yaml <<EOF
+---
+:logger: console
+:backends:
+  - yaml
+:yaml:
+  :datadir: $HIERADIR
+:hierachy:
+  - test
+EOF
+}
+
+get_args $@
+create_hiera
+puppet_apply

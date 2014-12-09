@@ -1,0 +1,9 @@
+name    'acme-role_db'
+version '0.1.0'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'Nick Strugnell <nstrug@redhat.com>'
+license 'GPL v3'
+summary 'Role class for a database server'
+description 'Include this class in a database server'
+project_page 'https://github.com/RedHatEMEA/acme-soe'
+
