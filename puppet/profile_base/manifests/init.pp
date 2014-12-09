@@ -21,12 +21,12 @@ class profile_base {
 
   file { '/etc/issue':
     ensure  => present,
-    content => template('base/issue.erb'),
+    content => template('issue.erb'),
   }
 
   file { '/etc/issue.net':
     ensure  => present,
-    content => template('base/issue.net.erb'),
+    content => template('issue.net.erb'),
   }
 }
 
