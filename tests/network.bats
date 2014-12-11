@@ -6,6 +6,6 @@
 }
 
 @test "Check that I can resolve www.redhat.com" {
-  run nslookup www.google.com 
+  run nslookup www.redhat.com 
 }
 
