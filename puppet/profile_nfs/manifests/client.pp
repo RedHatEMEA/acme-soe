@@ -2,7 +2,7 @@
 #
 # Configures an NFS client
 # - Support NFSv3 only
-# - Start nfslock
+# - Start nfs-lock
 # Implicitly included from profile_nfs
 #
 # === Parameters ===
@@ -34,7 +34,7 @@ class profile_nfs::client (
       hasstatus  => true,
     }
 
-    service { 'nfslock':
+    service { 'nfs-lock':
       ensure     => running,
       enable     => true,
       hasrestart => true,

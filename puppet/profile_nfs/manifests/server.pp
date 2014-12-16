@@ -4,7 +4,7 @@
 # - nfs rpcbind daemon
 # - Support NFSv3 only
 # Relies on profile_nfs::client for nfs-utils package
-# and the start of nfslock service
+# and the start of nfs-lock service
 # Implicitly included from profile_nfs::add_export
 #
 # === Parameters ===
@@ -30,7 +30,7 @@ class profile_nfs::server (
   $rpcnfsdcount = 8,
 ) {
   # The profile_nfs::client will install nfs-utils
-  # and start nfslock
+  # and start nfs-lock
   require profile_nfs::client
 
   file { '/etc/sysconfig/nfs':
