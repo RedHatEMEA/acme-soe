@@ -34,4 +34,3 @@ $serverprofile="dmz",
 	}
 
 }
-include firewall
