@@ -1,0 +1,17 @@
+{
+  "name": "acme-firewall",
+  "version": "0.0.1",
+  "author": "chris procter <cprocter@redhat.com>",
+  "license": "Licensed under (GPL 3.0)",
+  "summary": "firewall setup class",
+  "source": "https://github.com/RedHatEMEA/acme-soe",
+  "tags": ["firewall"],
+  "operatingsystem_support": [
+    {
+    "operatingsystem":"RedHat",
+    "operatingsystemrelease":[ "7.0" ]
+    }
+   ],
+  "dependencies": [
+  ]
+}
