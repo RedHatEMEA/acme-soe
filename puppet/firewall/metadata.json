@@ -1,6 +1,6 @@
 {
   "name": "acme-firewall",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "chris procter <cprocter@redhat.com>",
   "license": "Licensed under (GPL 3.0)",
   "summary": "firewall setup class",

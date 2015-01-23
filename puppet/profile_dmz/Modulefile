@@ -1,0 +1,8 @@
+name 'acme-dmz'
+version '0.0.2'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'chris procter <cprocter@redhat.com>'
+license 'GPL v3.0'
+summary 'dmz setup class, should include all modules required to run in the dmz'
+description ''
+project_page ''
