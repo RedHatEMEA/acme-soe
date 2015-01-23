@@ -1,0 +1,8 @@
+name 'acme-firewall'
+version '0.0.2'
+source 'https://github.com/RedHatEMEA/acme-soe'
+author 'chris procter <cprocter@redhat.com>'
+license 'GPL v3'
+summary 'firewall setup class'
+description ''
+project_page ''
