@@ -16,7 +16,9 @@
 #
 class role_www  {
   tag 'role_www'
+  tag 'role'
 
   include role
+  include profile_apache
 }
 

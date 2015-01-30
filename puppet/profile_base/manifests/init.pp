@@ -18,6 +18,7 @@ class profile_base {
   tag 'profile_base'
 
   include profile
+  include ssh
 
   file { '/etc/issue':
     ensure  => present,

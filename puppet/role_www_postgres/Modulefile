@@ -1,9 +1,0 @@
-name    'acme-role_db_postgres'
-version '0.2.0'
-source 'https://github.com/RedHatEMEA/acme-soe'
-author 'Nick Strugnell <nstrug@redhat.com>'
-license 'GPL v3'
-summary 'Postgres DB Role'
-description 'Postgres DB Role'
-project_page 'https://github.com/RedHatEMEA/acme-soe'
-
