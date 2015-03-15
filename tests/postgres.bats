@@ -9,7 +9,7 @@ fi
     rpm -q postgresql-server
 }
 
-@test "Is http running?" {
+@test "Is postgres running?" {
     systemctl status postgresql
 }
 
