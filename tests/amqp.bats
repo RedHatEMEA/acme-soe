@@ -1,7 +1,9 @@
 #!/usr/bin/env bats
 
-if ! grep -q "profile_qpid" /var/lib/puppet/client_data/catalog/`hostname`.json >&2 ; then
-  skip
+if ! grep -q "profile_qpid" /var/lib/puppet/client_data/catalog/`hostname`.json >&2
+then
+  echo 1
+  exit 1 
 fi
 
 @test "There is a local AMQP server properly running" {
