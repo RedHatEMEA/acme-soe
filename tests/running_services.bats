@@ -3,7 +3,7 @@
 # to run this create a link to the file with the service name
 # i.e. httpd.bats
 
-service=$( basename "${BATS_TEST_FILENAME}" .bats
+service=$( basename "${BATS_TEST_FILENAME}" .bats )
 if [  $( basename "${BATS_TEST_FILENAME}" ) == 'running_services.bats' ]
 then
   return
