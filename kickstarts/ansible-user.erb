@@ -12,3 +12,20 @@ echo "ansible ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/ansible
 echo "Defaults:ansible |requiretty" | tee -a /etc/sudoers.d/ansible
 chmod 04440 /etc/sudoers.d/ansible
 
+<% if !@host.params['ansible_ssh_key'].blank? %>
+
+<% ssh_path = "~ansible/.ssh" %>
+
+mkdir -p <%= ssh_path %>
+
+cat << EOF >> <%= ssh_path %>/authorized_keys
+<%= @host.params['ansible_ssh_key'].join("\n") %>
+EOF
+
+chmod 700 <%= ssh_path %>
+chmod 600 <%= ssh_path %>/authorized_keys
+chown -R <%= "#anisble:" %> <%= ssh_path %>
+
+# Restore SELinux context with restorecon, if it's available:
+command -v restorecon && restorecon -RvF <%= ssh_path %> || true
+<% end %>
