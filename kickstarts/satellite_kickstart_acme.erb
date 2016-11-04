@@ -1,16 +1,24 @@
 <%#
 kind: provision
-name: Kickstart RHEL ACME
+name: Satellite Kickstart default
 oses:
-- RedHat 4
+- CentOS 5
+- CentOS 6
+- CentOS 7
 - RedHat 5
 - RedHat 6
+- RedHat 7
+- Fedora 19
+- Fedora 20
 %>
 <%
+  rhel_compatible = @host.operatingsystem.family == 'Redhat' && @host.operatingsystem.name != 'Fedora'
   os_major = @host.operatingsystem.major.to_i
   # safemode renderer does not support unary negation
   pm_set = @host.puppetmaster.empty? ? false : true
-  puppet_enabled = pm_set || @host.params['force-puppet']
+  puppet_enabled = false
+  salt_enabled = @host.params['salt_master'] ? true : false
+  section_end = (rhel_compatible && os_major <= 5) ? '' : '%end'
 %>
 install
 <%= @mediapath %>
@@ -18,31 +26,32 @@ lang en_US.UTF-8
 selinux --enforcing
 keyboard us
 skipx
-network --bootproto <%= @static ? "static --ip=#{@host.ip} --netmask=#{@host.subnet.mask} --gateway=#{@host.subnet.gateway} --nameserver=#{[@host.subnet.dns_primary,@host.subnet.dns_secondary].reject{|n| n.blank?}.join(',')}" : 'dhcp' %> --hostname <%= @host %>
+
+<% subnet = @host.subnet -%>
+<% if subnet.respond_to?(:dhcp_boot_mode?) -%>
+<% dhcp = subnet.dhcp_boot_mode? && !@static -%>
+<% else -%>
+<% dhcp = !@static -%>
+<% end -%>
+
+network --bootproto <%= dhcp ? 'dhcp' : "static --ip=#{@host.ip} --netmask=#{subnet.mask} --gateway=#{subnet.gateway} --nameserver=#{[subnet.dns_primary, subnet.dns_secondary].select(&:present?).join(',')}" %> --hostname <%= @host %><%= os_major >= 6 ? " --device=#{@host.mac}" : '' -%>
+
 rootpw --iscrypted <%= root_pass %>
 firewall --<%= os_major >= 6 ? 'service=' : '' %>ssh
 authconfig --useshadow --passalgo=sha256 --kickstart
 timezone --utc <%= @host.params['time-zone'] || 'UTC' %>
 
-<% if os_major >= 7 && @host.info["parameters"]["realm"] && @host.otp && @host.realm -%>
-realm join --one-time-password=<%= @host.otp %> <%= @host.realm %>
-<% end -%>
-
-<% if os_major > 4 -%>
-services --disabled gpm,sendmail,cups,pcmcia,isdn,rawdevices,hpoj,bluetooth,openibd,avahi-daemon,avahi-dnsconfd,hidd,hplip,pcscd
-
-repo --name="Extra Packages for Enterprise Linux" --mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-<%= @host.operatingsystem.major %>&arch=<%= @host.architecture %>
-<% if puppet_enabled && @host.params['enable-puppetlabs-repo'] && @host.params['enable-puppetlabs-repo'] == 'true' -%>
-repo --name=puppetlabs-products --baseurl=http://yum.puppetlabs.com/el/<%= @host.operatingsystem.major %>/products/<%= @host.architecture %>
-repo --name=puppetlabs-deps --baseurl=http://yum.puppetlabs.com/el/<%= @host.operatingsystem.major %>/dependencies/<%= @host.architecture %>
-<% end -%>
-<% end -%>
-
+<% if @host.operatingsystem.name == 'Fedora' and os_major <= 16 -%>
+# Bootloader exception for Fedora 16:
+bootloader --append="nofb quiet splash=quiet <%=ks_console%>" <%= grub_pass %>
+part biosboot --fstype=biosboot --size=1
+<% else -%>
 bootloader --location=mbr --append="nofb quiet splash=quiet" <%= grub_pass %>
+<% end -%>
+
 <% if os_major == 5 -%>
 key --skip
 <% end -%>
-
 
 <% if @dynamic -%>
 %include /tmp/diskpart.cfg
@@ -59,19 +68,12 @@ dhclient
 ntp
 wget
 @Core
-epel-release
-<% if puppet_enabled %>
-puppet
-<% if @host.params['enable-puppetlabs-repo'] && @host.params['enable-puppetlabs-repo'] == 'true' -%>
-puppetlabs-release
-<% end -%>
-<% end -%>
-%end
+<%= section_end -%>
 
 <% if @dynamic -%>
 %pre
 <%= @host.diskLayout %>
-%end
+<%= section_end -%>
 <% end -%>
 
 %post --nochroot
@@ -82,7 +84,8 @@ exec < /dev/tty3 > /dev/tty3
 cp -va /etc/resolv.conf /mnt/sysimage/etc/resolv.conf
 /usr/bin/chvt 1
 ) 2>&1 | tee /mnt/sysimage/root/install.postnochroot.log
-%end
+<%= section_end -%>
+
 
 %post
 logger "Starting anaconda <%= @host %> postinstall"
@@ -90,19 +93,34 @@ exec < /dev/tty3 > /dev/tty3
 #changing to VT 3 so that we can see whats going on....
 /usr/bin/chvt 3
 (
+<% if subnet.respond_to?(:dhcp_boot_mode?) -%>
+<%= snippet 'kickstart_networking_setup' %>
+<% end -%>
+
 #update local time
 echo "updating system time"
 /usr/sbin/ntpdate -sub <%= @host.params['ntp-server'] || '0.fedora.pool.ntp.org' %>
 /usr/sbin/hwclock --systohc
 
-<%= snippet 'redhat_register' %>
+<%= snippet "subscription_manager_registration_acme" %>
 
-<% if @host.info["parameters"]["realm"] && @host.otp && @host.realm && @host.realm.realm_type == "Red Hat Identity Management" && os_major <= 6 -%>
-<%= snippet "freeipa_register" %>
+<% if @host.info['parameters']['realm'] && @host.realm && @host.realm.realm_type == 'Red Hat Identity Management' -%>
+<%= snippet "idm_register" %>
 <% end -%>
 
 # update all the base packages from the updates repository
 yum -t -y -e 0 update
+
+<% if salt_enabled %>
+yum -t -y -e 0 install salt-minion
+cat > /etc/salt/minion << EOF
+<%= snippet 'saltstack_minion' %>
+EOF
+# Setup salt-minion to run on system reboot
+/sbin/chkconfig --level 345 salt-minion on
+# Running salt-call to trigger key signing
+salt-call --no-color --grains >/dev/null
+<% end -%>
 
 <% if puppet_enabled %>
 # and add the puppet package
@@ -113,6 +131,9 @@ cat > /etc/puppet/puppet.conf << EOF
 <%= snippet 'puppet.conf' %>
 EOF
 
+<%= snippet('ansible_user_config') %>
+<%= snippet('remote_execution_ssh_keys') %>
+
 # Setup puppet to run on system reboot
 /sbin/chkconfig --level 345 puppet on
 
@@ -121,11 +142,13 @@ EOF
 
 sync
 
+<% if @provisioning_type == nil || @provisioning_type == 'host' -%>
 # Inform the build system that we are done.
 echo "Informing Foreman that we are built"
 wget -q -O /dev/null --no-check-certificate <%= foreman_url %>
-# Sleeping an hour for debug
+<% end -%>
 ) 2>&1 | tee /root/install.post.log
 exit 0
 
-%end
+<%= section_end -%>
+

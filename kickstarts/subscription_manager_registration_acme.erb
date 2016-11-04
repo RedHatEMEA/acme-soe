@@ -1,0 +1,24 @@
+<%#
+kind: snippet
+name: subscription_manager_registration_acme
+%>
+<% if @host.params['kt_activation_keys'] %>
+# add subscription manager
+yum -t -y -e 0 install subscription-manager
+rpm -ivh <%= subscription_manager_configuration_url(@host) %>
+
+echo "Registering the System"
+<% ak_key_name="ak_"+@host.info['parameters']['lifecycle_environment'].to_s+"_"+"RHEL"+@host.operatingsystem.major.to_s+"."+@host.operatingsystem.minor.to_s -%>
+
+subscription-manager register --org="<%=@host.rhsm_organization_label%>" --name="<%=host.name%>" --activationkey=<%=ak_key_name%>
+
+<% if @host.operatingsystem.name == "RedHat" %>
+  # add the rhel rpms to install katello agent
+  subscription-manager repos --enable=rhel-*-satellite-tools-*-rpms
+<% end %>
+
+echo "Installing Katello Agent"
+yum -t -y -e 0 install katello-agent
+chkconfig goferd on
+<% end %>
+
