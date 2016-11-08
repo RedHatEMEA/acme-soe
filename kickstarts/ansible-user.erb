@@ -9,7 +9,7 @@ oses:
 
 useradd ansible
 echo "ansible ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/ansible
-echo "Defaults:ansible |requiretty" | tee -a /etc/sudoers.d/ansible
+echo 'Defaults:ansible !requiretty' | tee -a /etc/sudoers.d/ansible
 chmod 04440 /etc/sudoers.d/ansible
 
 <% if !@host.params['ansible_ssh_key'].blank? %>
