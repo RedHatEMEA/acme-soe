@@ -11,7 +11,7 @@ echo "Registering the System"
 <% ak_key_name="ak_"+@host.info['parameters']['lifecycle_environment']+"_"+@host.info['parameters']['content_view'] -%>
 
 subscription-manager register --org="<%=@host.rhsm_organization_label%>" --name="<%=@host.name%>" --activationkey=<%=ak_key_name%>
-
+sleep 30
 <% if @host.operatingsystem.name == "RedHat" %>
   # add the rhel rpms to install katello agent
   subscription-manager repos --enable=rhel-*-satellite-tools-*-rpms
