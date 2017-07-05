@@ -1,14 +1,16 @@
 #!/usr/bin/env bats
 
-# note that on RHEL7 you might be using the default of chrony
-# instead of ntp
+# vim: filetype=sh:autoindent:tabstop=2:shiftwidth=2:expandtab
 
-@test "Is ntp installed?" {
-  rpm -q ntp
+load os_helper
+
+# if you use chrony, then this test is not for you
+
+@test "ntp, is ntp installed?" {
+    tPackageExists ntp
 }
 
-# do not enable ntp here, you want to test that you enabled this correctly via puppet or kickstart
-@test "Is ntpd running?" {
+@test "ntp, is ntpd running?" {
   if [ -e '/usr/bin/systemctl' ]
   then
     run systemctl status ntpd

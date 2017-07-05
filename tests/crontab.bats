@@ -4,16 +4,16 @@
 
 load os_helper
 
-@test "ssh, is openssh-server installed?" {
-    tPackageExists openssh-server
+@test "crontab, is cronie installed?" {
+    tPackageExists cronie
 }
 
-@test "ssh, is sshd running?" {
+@test "crontab, is crond running?" {
   if [ -e '/usr/bin/systemctl' ]
   then
-    run systemctl status sshd
+    run systemctl status crond
   else
-    run service sshd status
-  fi
+    run service crond status
+  fi 
   [ "$status" -eq 0 ]
 }

@@ -1,32 +1,29 @@
 #!/usr/bin/env bats
 
-@test "dns_search, can I ping a short hostname?" {
-  ping -c 1 $(hostname -s)
-}
+# test that the DNS setup is correct
 
-@test "nameserver, is at least one nameserver set?" {
+@test "network-resolv, is at least one nameserver set?" {
   grep -q nameserver /etc/resolv.conf
 }
 
-@test "nameserver, is the first nameserver pingable?" {
-  nameserver1=$(grep nameserver /etc/resolv.conf | awk '{ print $2 }' | 
-head -n 1)
+@test "network-resolv, is the first nameserver pingable?" {
+  nameserver1=$(grep nameserver /etc/resolv.conf | awk '{ print $2 }' | head -n 1)
   ping -c 1 ${nameserver1}
 }
 
-@test "nameserver, is the last nameserver pingable?" {
-  nameserver2=$(grep nameserver /etc/resolv.conf | awk '{ print $2 }' | 
-tail -n 1)
+@test "network-resolv, is the last nameserver pingable?" {
+  nameserver2=$(grep nameserver /etc/resolv.conf | awk '{ print $2 }' | tail -n 1)
   ping -c 1 ${nameserver2}
 }
 
-# bind-utils is not part of a base install, so install it and check
-@test "was bind-utils successfully installed?" {
+# ensure that bind-utils is installed, otherwise we have no nslookup command
+@test "network-resolv, is bind-utils installed?" {
   yum -y --quiet install bind-utils
   rpm -q bind-utils
 }
+
 # try to resolve the SUT's hostname
-@test "name resolution, can I resolve System Under Test fqdn?" {
+@test "network-resolv, can I resolve System Under Test fqdn?" {
   nslookup $(hostname -f)
 }
 

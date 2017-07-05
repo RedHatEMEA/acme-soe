@@ -1,14 +1,14 @@
 #!/usr/bin/env bats
 
-###
-### you may want to make this test a bit more intelligent
-###
+# vim: filetype=sh:autoindent:tabstop=2:shiftwidth=2:expandtab
 
-@test "Is rsyslog installed?" {
-  rpm -q rsyslog
+load os_helper
+
+@test "rsyslog, is rsyslog installed?" {
+    tPackageExists rsyslog
 }
 
-@test "Is rsyslog running?" {
+@test "rsyslog, is rsyslog running?" {
   if [ -e '/usr/bin/systemctl' ]
   then
     run systemctl status rsyslog
