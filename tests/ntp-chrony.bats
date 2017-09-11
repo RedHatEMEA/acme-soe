@@ -34,9 +34,9 @@ load os_helper
     result="$(ntpdc -l 127.0.0.1 | grep ^client | wc -l)"
   elif tIsRHEL 7; then
     result="$(chronyc sources | grep ^\^ | wc -l)"
-  else                                                                                                                                                                                                                                         
-    echo "Do not know this OS"                                                                                                                                                                                                                 
-    false                                                                                                                                                                                                                                      
+  else
+    echo "Do not know this OS"
+    false
   fi 
   [ ${result} -ge 2 ]
 }
