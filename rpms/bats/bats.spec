@@ -27,7 +27,7 @@ Bats is a TAP-compliant testing framework for Bash. It provides a simple way to 
 %{_mandir}/man7/*
 
 %changelog
-* Sun Sep 27 2020 <pcfe@redhat.com> - 0.4.0-11
+* Sun Sep 27 2020 <pcfe@redhat.com> - 0.4.0-5
 - do NOT build debug package
 
 * Thu Aug 14 2014 <nstrug@redhat.com> - 0.4.0-1
